@@ -12,7 +12,7 @@ from decimal import Decimal, InvalidOperation
 from http.cookies import SimpleCookie
 from pathlib import Path
 from urllib.error import HTTPError, URLError
-from urllib.parse import parse_qs, quote, urlsplit
+from urllib.parse import parse_qs, quote, unquote, urlsplit
 from urllib.request import Request, urlopen
 from wsgiref.simple_server import make_server
 
@@ -49,6 +49,12 @@ def database_error_code(error):
     state = getattr(error, 'sqlstate', None)
     if state == '28P01' or 'password authentication failed' in msg:
         return 'DB_PASSWORD', 'Senha do banco incorreta ou mal codificada na URI.'
+    if 'circuit breaker' in msg:
+        return 'DB_CIRCUIT_BREAKER', 'Pooler bloqueou temporariamente novas conexoes apos falhas de autenticacao.'
+    if 'max client connections' in msg or 'too many clients' in msg:
+        return 'DB_CONNECTION_LIMIT', 'Limite de conexoes do banco/pooler atingido.'
+    if 'connection refused' in msg:
+        return 'DB_REFUSED', 'Host/porta recusou a conexao. Confira a URI do pooler e projeto ativo.'
     if 'tenant or user not found' in msg:
         return 'DB_POOLER_USER', 'Usuario/host do pooler incorreto. Copie a URI de Connect > Session pooler.'
     if 'could not translate host' in msg or 'name or service not known' in msg or 'nodename nor servname' in msg:
@@ -69,9 +75,35 @@ def database_error_code(error):
         return 'DB_PERMISSION', 'A conexao ao banco nao tem a permissao necessaria.'
     return 'DB_CONNECTION', 'Conexao recusada. Confira URI, senha, projeto ativo e restricoes de rede.'
 
+def safe_database_detail(error):
+    message = str(error)
+    sensitive = [DATABASE_URL, API_KEY, SUPABASE_KEY]
+    try:
+        from psycopg.conninfo import conninfo_to_dict
+        password = conninfo_to_dict(DATABASE_URL).get('password', '')
+        sensitive += [password, unquote(password), quote(password, safe='')]
+    except Exception:
+        pass
+    try:
+        password = urlsplit(DATABASE_URL).password or ''
+        sensitive += [password, unquote(password), quote(unquote(password), safe='')]
+    except ValueError:
+        pass
+    # Handles even an invalid URI with unencoded reserved characters in the password.
+    candidate = re.search(r'postgres(?:ql)?://[^:]+:(.*)@', DATABASE_URL)
+    if candidate:
+        sensitive += [candidate.group(1), unquote(candidate.group(1))]
+    for secret in sorted(set(v for v in sensitive if v), key=len, reverse=True):
+        message = message.replace(secret, '[REDACTED]')
+    message = re.sub(r'(?:postgres(?:ql)?|https?)://[^\s\"\']+', '[URI_REDACTED]', message)
+    message = re.sub(r"(?i)(password\s*=\s*)(?:'[^']*'|\"[^\"]*\"|[^\s;]+)", r'\1[REDACTED]', message)
+    message = ' | '.join(line.strip() for line in message.splitlines() if line.strip())
+    return message[:1200]
+
 def report_database_error(error):
     code, explanation = database_error_code(error)
     print('SUPABASE_DB_ERROR [' + code + '] ' + explanation, flush=True)
+    print('SUPABASE_DB_DETAIL ' + safe_database_detail(error), flush=True)
     return code
 
 def db():
