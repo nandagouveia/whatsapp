@@ -1,108 +1,151 @@
-# Pix com ProfanusPay
+# Render gratuito + Supabase gratuito + ProfanusPay
 
-Este pacote adapta seu HTML e inclui o servidor que faltava. O preço padrão é R$ 20,00.
+Este pacote substitui a versão anterior. Não exige Persistent Disk. Os pedidos ficam no PostgreSQL do Supabase e o vídeo pago fica em um bucket privado. O servidor Python no Render confirma o Pix e libera um link temporário do vídeo.
 
-## O que foi implementado
+## 1. Crie seu projeto Supabase
 
-- Criação de cobrança na API oficial, exibindo QR Code e Pix copia e cola.
-- Preço definido pelo servidor, sem aceitar alterações pelo navegador.
-- Consulta periódica do pagamento; apenas `paid` libera o vídeo.
-- Validação do ID da transação e do valor bruto antes de liberar o acesso.
-- Cobrança recuperada no mesmo navegador após recarregar a página.
-- Idempotência com `external_id`: uma tentativa que falhar pode ser repetida sem duplicar a cobrança.
-- Tratamento de Pix expirado, cancelado e falhas do gateway.
-- Vídeo completo privado, liberado somente para o navegador que criou a cobrança.
-- SQLite para persistir pedidos e suporte a streaming com requisições Range.
+1. Acesse https://supabase.com/dashboard e crie um projeto no plano Free.
+2. Escolha e guarde a senha do banco de dados.
+3. Abra **SQL Editor > New query**.
+4. Cole todo o conteúdo de `supabase.sql` e clique em **Run**.
 
-A chave de API não aparece no HTML. O servidor só serve arquivos públicos específicos. A indicação de vídeo gravado foi mantida.
+Isso cria a tabela `pix_orders`, com acesso público bloqueado. Não habilite políticas públicas para essa tabela. Os pedidos são consultados somente pelo backend.
 
-## 1. Coloque seus arquivos
+## 2. Envie o vídeo completo de 10 MB
 
-Dentro da pasta do projeto:
+1. No Supabase, abra **Storage** e crie um bucket chamado `videos-pagos`.
+2. Mantenha **Public bucket DESATIVADO**. Ele deve ser privado.
+3. Faça upload do vídeo com o nome `completo.mp4`, diretamente na raiz do bucket.
 
-| Arquivo | Destino |
+O código recusa criar uma cobrança se o vídeo não estiver acessível pelo servidor ou o bucket estiver público. A chave secreta fica somente no Render. O navegador não recebe a chave nem acesso direto ao banco.
+
+## 3. Obtenha as configurações do Supabase
+
+- **SUPABASE_URL:** a Project URL do projeto, como `https://SEUPROJETO.supabase.co`.
+- **SUPABASE_SECRET_KEY:** chave secreta de servidor, geralmente começando com `sb_secret_`, em Settings > API Keys. Não use `sb_publishable_` nem `anon`.
+- Se usar o modelo antigo de chaves, preencha **SUPABASE_SERVICE_ROLE_KEY** com a chave `service_role`, em vez de SUPABASE_SECRET_KEY.
+- **DATABASE_URL:** no topo do projeto, clique em **Connect**, escolha **Session pooler** e copie a URI. Substitua `[YOUR-PASSWORD]` pela senha do banco. Use os nomes e o host fornecidos pelo painel, sem inventar o endereço.
+
+Formato ilustrativo:
+
+```text
+postgresql://postgres.SEUPROJETO:SENHA@HOST_DO_POOLER:5432/postgres
+```
+
+Caracteres reservados na senha precisam ser codificados na URI: `@` vira `%40`, `#` vira `%23`, `%` vira `%25`, `/` vira `%2F`. Uma senha gerada com letras, números, hífen e sublinhado evita esse problema. Não compartilhe a senha nem a URI completa.
+
+Use Session pooler para ter compatibilidade IPv4 sem comprar o adicional IPv4 do Supabase. O servidor exige SSL na conexão.
+
+## 4. Substitua o projeto no GitHub
+
+Extraia o ZIP. Envie o **conteúdo** da pasta `profanus-pix-gratuito` para seu repositório privado.
+
+Na raiz devem ficar:
+
+```text
+server.py
+requirements.txt
+supabase.sql
+render.yaml
+.python-version
+public/index.html
+```
+
+Não envie o ZIP como único arquivo. Não envie `.env`, credenciais ou o vídeo pago. Preserve sua foto e sua prévia, caso já as tenha colocado no projeto:
+
+- `public/perfil.jpg`: foto do perfil.
+- `public/video.mp4`: prévia gratuita.
+
+Se você personalizou o HTML da versão anterior, copie suas alterações de nome, legendas, foto e prévia para o novo `public/index.html`.
+
+O conteúdo da pasta `private` e as variáveis `FULL_VIDEO_PATH` e `DATABASE_PATH` não são utilizados nesta versão. Pedidos antigos do SQLite não são migrados automaticamente.
+
+## 5. Configure seu serviço Render existente
+
+Em **Settings**:
+
+| Campo | Valor |
 | --- | --- |
-| Foto do perfil | `public/perfil.jpg` |
-| Vídeo de apresentação gratuito | `public/video.mp4` |
-| Vídeo completo pago | `private/completo.mp4` |
+| Instance Type | Free |
+| Root Directory | Vazio, se server.py estiver na raiz |
+| Build Command | `pip install -r requirements.txt` |
+| Start Command | `gunicorn --workers 1 --threads 4 --timeout 90 --bind 0.0.0.0:$PORT server:app` |
+| Health Check Path | `/health` |
 
-Os arquivos de mídia não foram enviados junto com o código original e não estão neste pacote. A criação de Pix fica bloqueada enquanto o vídeo completo não existir, para evitar cobrar por um conteúdo indisponível.
+Se enviou a pasta inteira e `server.py` ficou dentro dela, use `profanus-pix-gratuito` em Root Directory. O arquivo `.python-version` seleciona Python 3.12.12; alternativamente configure `PYTHON_VERSION=3.12.12` no Render.
 
-Não coloque o vídeo completo em `public/`. Não reutilize o vídeo pago como prévia.
+Em **Environment**, adicione:
 
-## 2. Configure o gateway
+| Variável | O que preencher |
+| --- | --- |
+| `PROFANUS_API_KEY` | Sua API key da ProfanusPay |
+| `PUBLIC_URL` | A URL HTTPS exata do seu serviço Render, sem barra final |
+| `DATABASE_URL` | URI do Session pooler do Supabase, com senha preenchida |
+| `SUPABASE_URL` | Project URL do Supabase |
+| `SUPABASE_SECRET_KEY` | Chave secreta do servidor |
+| `PIX_AMOUNT` | `20.00` |
+| `VIDEO_BUCKET` | `videos-pagos` |
+| `VIDEO_PATH` | `completo.mp4` |
 
-Copie `.env.example` para `.env` e preencha:
+A alternativa legada `SUPABASE_SERVICE_ROLE_KEY` é aceita quando SUPABASE_SECRET_KEY não está definida. Não exponha nenhuma das duas no HTML.
 
-```dotenv
-PROFANUS_API_KEY=SUA_CHAVE_REAL
-PUBLIC_URL=http://localhost:8080
-PIX_AMOUNT=20.00
-PIX_EXPIRATION=1800
+Exemplo de PUBLIC_URL:
+
+```text
+https://whatsapp-abc123.onrender.com
 ```
 
-Obtenha a chave em Dashboard → Integrações → API Keys da ProfanusPay. Preencha apenas no servidor. Não envie a chave para conversas, não coloque no HTML e não publique `.env`.
+Exclua as antigas `DATABASE_PATH` e `FULL_VIDEO_PATH`. Nenhum disco persistente precisa ser adicionado. Clique em **Manual Deploy > Deploy latest commit**.
 
-A documentação da ProfanusPay indica a base `https://nexuspag.com`, o header `x-api-key`, `POST /api/pix/create` e `GET /api/pix/{id}`. O valor é enviado em reais, não em centavos. A criação retorna `transaction`; a consulta retorna os campos da transação diretamente.
+Se preferir criar um serviço novo, o `render.yaml` também permite usar **New > Blueprint**, desde que o arquivo esteja na raiz do repositório. Escolha só um caminho: serviço existente ou Blueprint.
 
-Documentação consultada em 09/10/2026:
-- https://profanuspay.com/docs
-- https://profanuspay.com/docs/create-pix
-- https://profanuspay.com/docs/get-pix
+## 6. Confira antes de compartilhar
 
-## 3. Execute localmente
+1. Abra o endereço do Render; ele exibirá sua página.
+2. Atenda à apresentação e abra a tela de pagamento.
+3. Clique em Gerar Pix.
+4. Confira se o QR Code e o copia e cola aparecem e se a cobrança foi criada na sua conta ProfanusPay.
+5. Valide um Pix pago na sua conta: somente após a API retornar `paid`, o vídeo deve abrir.
+6. Recarregue no mesmo navegador e confira a retomada do pedido.
 
-Requer Python 3.11 ou superior. Para desenvolvimento, não há dependências adicionais:
+Use uma cobrança real apenas quando estiver preparado para efetuar o teste. A API configurada é de produção. Nenhuma cobrança real foi criada na preparação deste pacote.
 
-```bash
-cd profanus-pix
-cp .env.example .env
-# Edite .env e coloque os três arquivos de mídia.
-python server.py
-```
+## Como o vídeo é liberado
 
-Abra **http://localhost:8080**. Não abra `index.html` com duplo clique: o Pix precisa do servidor. Use localhost, pois a proteção de origem exige correspondência exata com `PUBLIC_URL`.
+A página consulta `/api/pix/status` a cada 4 segundos. O servidor consulta a ProfanusPay e valida transação e valor. Após `paid`, a página acessa `/api/video`; o servidor verifica o navegador do pedido e redireciona para uma URL assinada do bucket privado. O link dura 1 hora, configurável por `VIDEO_LINK_SECONDS`.
 
-A API configurada é real. Depois que uma chave válida for instalada, gerar Pix cria uma cobrança real. Não foi identificado um ambiente de testes na documentação consultada.
+Quem tiver um link assinado válido poderá usá-lo até expirar. Ele não é uma proteção contra gravações de tela ou compartilhamento por um cliente autorizado. Ao expirar, recarregue a página e abra seu pedido novamente no mesmo navegador para receber um link novo. Limpar cookies ou mudar de dispositivo exige recuperação de compra, ainda não incluída.
 
-## 4. Hospede
+## Limites gratuitos
 
-Precisa de uma hospedagem que execute Python, com HTTPS e volume persistente. Hospedagem apenas de HTML não executa esta integração.
+Consultados em 09/10/2026:
+
+- Supabase Free: 500 MB de banco, 1 GB de arquivos, máximo 50 MB por arquivo, 5 GB de tráfego não cacheado e 5 GB de tráfego cacheado. Seu vídeo de 10 MB cabe no limite por arquivo. Reproduções repetidas consomem tráfego, portanto a quantidade de espectadores não é ilimitada.
+- Projetos Supabase Free podem pausar após uma semana sem atividade.
+- Render Free dorme após 15 minutos sem acessos; o próximo acesso pode levar cerca de um minuto para carregar.
+- As tarifas da ProfanusPay continuam sendo aplicadas conforme sua conta.
+
+Não há promessa de custo zero fora das cotas gratuitas nem de disponibilidade contínua. Para começar com baixo volume, essa configuração dispensa o disco pago. A alteração foi preparada e testada localmente; sua conta Supabase e sua hospedagem ainda precisam ser configuradas.
+
+## Testes e execução local
 
 ```bash
 python -m pip install -r requirements.txt
-# No ambiente da hospedagem, execute dentro da pasta do projeto:
-gunicorn --workers 2 --threads 4 --timeout 60 --bind 0.0.0.0:8080 server:app
-```
-
-Configure as variáveis no painel da hospedagem. Em produção:
-
-```dotenv
-PUBLIC_URL=https://seu-dominio.com
-DATABASE_PATH=/volume-persistente/orders.sqlite3
-FULL_VIDEO_PATH=/volume-privado/completo.mp4
-```
-
-A origem deve ser exata, sem barra final, sem subpasta e sem parâmetros. Configure proxy HTTPS, limite de requisições para `/api/pix/criar` e volume persistente para o SQLite. Use uma única instância com disco local persistente; este projeto não está preparado para múltiplas instâncias com discos separados nem para execução serverless. O servidor local de `python server.py` é apenas para desenvolvimento.
-
-Os cookies serão `Secure` quando `PUBLIC_URL` começar com HTTPS. O proxy precisa encaminhar pedidos para o servidor sem publicar a raiz do projeto como pasta estática.
-
-A confirmação usa consulta automática a cada 4 segundos, com breve cache no servidor. Não exige configurar webhook; segundo a documentação, consultar uma cobrança pendente verifica o pagamento no gateway. Falhas de rede adiam a liberação até a consulta funcionar.
-
-## Personalize
-
-Nome, foto, prévia, legendas e textos ficam em `public/index.html`, no objeto `CONFIG`. O preço vem de `PIX_AMOUNT`, no servidor; reinicie após mudar essa variável. A duração do Pix vem de `PIX_EXPIRATION`, em segundos.
-
-O pedido pertence ao cookie do navegador. Limpar cookies ou trocar de dispositivo não recupera o acesso automaticamente. Para acesso entre dispositivos, é necessário acrescentar login ou uma recuperação de compra verificada. Reproduzir um vídeo pago não impede gravações de tela ou cópias feitas por um cliente autorizado.
-
-## Validação realizada
-
-Execute:
-
-```bash
 python -m unittest -v test_server
 ```
 
-11 testes passaram com a API simulada: preço protegido, formato da criação, pendente/pago, streaming, acesso de outro navegador, retomada, idempotência após timeout, valor divergente, expirado/cancelado, proteção de origem, vídeo ausente, arquivos privados e persistência.
+15 testes passaram com gateway e serviços externos simulados. Eles verificam criação, valor protegido, confirmação, retomada, timeout com idempotência, acesso por outro navegador, valor divergente, expirado/cancelado, origem da requisição, persistência lógica, bucket público recusado, vídeo ausente, URL assinada e rejeição de URL externa.
 
-Ainda falta validar uma cobrança com sua conta real, sua chave, seus vídeos e a hospedagem escolhida. Nenhuma cobrança real foi criada nesta implementação.
+Os testes usam um banco local de teste para verificar o fluxo; não conectam ao PostgreSQL do seu projeto nem fazem pagamentos reais. A conexão ao Supabase e a validação real do Pix devem ser conferidas com as configurações acima.
+
+Para executar localmente, copie `.env.example` para `.env`, preencha com suas credenciais e execute `python server.py`. Abra `http://localhost:8080`; não abra o HTML por duplo clique.
+
+## Referências oficiais
+
+- https://profanuspay.com/docs/create-pix
+- https://profanuspay.com/docs/get-pix
+- https://supabase.com/docs/guides/database/connecting-to-postgres
+- https://supabase.com/docs/guides/api/api-keys
+- https://supabase.com/docs/reference/python/storage-from-createsignedurl
+- https://supabase.com/pricing
+- https://render.com/docs/free
