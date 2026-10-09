@@ -113,7 +113,7 @@ form{display:flex;gap:8px;align-items:center}
    ===================================================================== */
 const CONFIG = {
   storageKey: "chat-adulto-v3",
-  profile: { name: "Nanda Gouveia", status: "Atendimento virtual · +18", photo: "https://blog.privacy.com.br/wp-content/uploads/2026/06/GY4lvwuWAAAfnvt.png" },
+  profile: { name: "Nanda Gouveia", status: "Atendimento virtual · +18", photo: "perfil.jpg" },
   colors: { header: "#075e54", accent: "#128c7e", userBubble: "#d9fdd3", botBubble: "#ffffff", background: "#efeae2", text: "#111b21" },
   apelidos: ["meu amorzinho", "meu bem", "gatinho", "lindo", "meu docinho", "vida"],
 
@@ -127,7 +127,7 @@ const CONFIG = {
   prices: { fotos: "R$ 9,90", videos: "R$ 19,90", combo: "R$ 29,90" },
 
   /* Só preencha se for VERDADE. Ex.: prazo "2026-10-31T23:59:00-03:00", vagas 10 */
-  offer: { deadline:"prazo, 2026-10-31T23:59:00-03:00", "apenas 10 vagas", slots: null },
+  offer: { deadline: "apenas 10 vagas", slots: null },
 
   /* Dados reais opcionais (vazio = não aparece) */
   real: {
@@ -292,7 +292,7 @@ const CONFIG = {
 
     { id: "d_seguro", type: "choice",
       messages: [
-        { text: "Entendo o seu medo, {{nome}}, e acho certo você perguntar 👏 Aqui no chat eu nunca peço senha, código de verificação nem dados de cartão ou banco. Você só informa o pagamento na página da minha plataforma." },
+        { text: "Entendo o seu medo, {{nome}}, e acho certo você perguntar 👏 Aqui no chat eu nunca peço senha, código de verificação nem dados de cartão ou banco. Você só informa o pagamento na página da plataforma." },
         { if: "fatura", text: "🤫 {{real.fatura}}" },
         { if: "guarantee", text: "🔒 {{real.guarantee}}" }
       ],
