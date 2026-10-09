@@ -24,7 +24,7 @@ if (ROOT / '.env').exists():
             key, value = line.split('=', 1)
             os.environ.setdefault(key.strip(), value.strip().strip('\"').strip("'"))
 API_BASE = 'https://nexuspag.com'
-API_KEY = os.getenv('PROFANUS_API_KEY', '')
+API_KEY = os.getenv('PROFANUS_API_KEY', '').strip()
 PUBLIC_URL = os.getenv('PUBLIC_URL', 'http://localhost:8080').rstrip('/')
 DATABASE_URL = os.getenv('DATABASE_URL', '')
 SUPABASE_URL = os.getenv('SUPABASE_URL', '').rstrip('/')
@@ -176,9 +176,24 @@ def lock_session(conn, session):
     # Transaction-scoped lock works across workers and survives connection pooling.
     conn.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))', (session,))
 
+def gateway_error_detail(raw):
+    try:
+        data = json.loads(raw)
+        if not isinstance(data, dict): return 'Resposta de erro sem objeto JSON.'
+        # Never log complete payloads, transactions or payer information.
+        fields = []
+        for key in ('code', 'error_code', 'error', 'message'):
+            value = data.get(key)
+            if isinstance(value, (str, int)):
+                fields.append(key + '=' + safe_database_detail(Exception(str(value)))[:400])
+        return '; '.join(fields) or 'Resposta JSON sem mensagem de erro.'
+    except (ValueError, TypeError):
+        return 'Resposta nao JSON (HTML/texto). O corpo nao foi registrado.'
+
 def gateway(path, payload=None):
     if not API_KEY:
         raise Failure(503, 'Configure a chave da ProfanusPay no servidor.')
+    operation = 'create' if payload is not None else 'status'
     request = Request(API_BASE + path,
                       data=json.dumps(payload).encode() if payload is not None else None,
                       headers={'x-api-key': API_KEY, 'Content-Type': 'application/json'},
@@ -187,15 +202,22 @@ def gateway(path, payload=None):
         with urlopen(request, timeout=20) as response:
             result = json.load(response)
         if not isinstance(result, dict) or result.get('success') is False:
-            raise Failure(502, 'O gateway não retornou uma cobrança válida.')
+            detail = gateway_error_detail(json.dumps(result))
+            print('PROFANUS_ERROR operation=' + operation + ' http=2xx ' + detail, flush=True)
+            raise Failure(502, 'O gateway recusou a operação. Confira PROFANUS_ERROR nos logs do Render.')
         return result
     except HTTPError as e:
+        try: detail = gateway_error_detail(e.read(16384))
+        except Exception: detail = 'Corpo da resposta indisponivel.'
+        print('PROFANUS_ERROR operation=' + operation + ' http=' + str(e.code) + ' ' + detail, flush=True)
         if e.code == 401:
             raise Failure(503, 'Credencial do gateway inválida. Contate o responsável pela página.')
         if e.code == 429:
             raise Failure(429, 'Gateway ocupado. Aguarde alguns segundos e tente novamente.')
-        raise Failure(502, 'Não foi possível concluir a consulta ao gateway. Tente novamente.')
-    except (URLError, TimeoutError, ValueError, OSError):
+        raise Failure(502, 'Gateway retornou HTTP ' + str(e.code) + '. Confira PROFANUS_ERROR nos logs do Render.')
+    except (URLError, TimeoutError, ValueError, OSError) as e:
+        # Error type is enough for transport failures and contains no credentials.
+        print('PROFANUS_ERROR operation=' + operation + ' transport=' + type(e).__name__, flush=True)
         raise Failure(502, 'Gateway temporariamente indisponível. Tente novamente.')
 
 def checked_transaction(data, order):
