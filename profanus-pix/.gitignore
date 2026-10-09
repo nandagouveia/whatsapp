@@ -1,0 +1,6 @@
+.env
+__pycache__/
+data/
+private/*.mp4
+public/*.mp4
+public/*.jpg
