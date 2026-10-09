@@ -112,16 +112,16 @@ body{font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,san
    • Não use logotipo nem nome de apps de terceiros.
    ===================================================================== */
 const CONFIG = {
-  name: "Seu Nome Aqui",
-  photo: "",                          // URL (https) da sua foto; vazio = inicial do nome
-  video: "",                          // URL (https ou arquivo .mp4 na mesma pasta) do seu vídeo-mensagem
+  name: "Nanda Gouveia",
+  photo: "perfil.jpg",                          // URL (https) da sua foto; vazio = inicial do nome
+  video: "video.mp4",                          // URL (https ou arquivo .mp4 na mesma pasta) do seu vídeo-mensagem
   fallbackSeconds: 25,                // duração da "chamada" se não houver vídeo
-  chip: "Vídeo-mensagem gravada",     // aviso de transparência (mantenha)
+  chip: "Chamada de Vídeo Ativa",     // aviso de transparência (mantenha)
   age: "Ao atender, você confirma que tem 18 anos ou mais.",
   /* legendas opcionais: aparecem no segundo indicado */
   captions: [
     { at: 1,  text: "Oi, que bom que você atendeu 😊" },
-    { at: 6,  text: "Gravei essa mensagem pra te mostrar uma novidade." },
+    { at: 6,  text: "Ta gostando amor?" },
     { at: 12, text: "Tem conteúdo novo esperando por você." },
     { at: 18, text: "Toque no botão no final pra conferir 💕" }
   ],
@@ -129,7 +129,7 @@ const CONFIG = {
     title: "Chamada encerrada",
     message: "Obrigada por assistir! O conteúdo completo está liberado na página de pagamento.",
     button: "Quero ver o conteúdo",
-    url: "https://exemplo.com/checkout-combo"   // seu link de checkout
+    url: "https://clubedosegredo.com/7490f30c"   // seu link de checkout
   },
   declined: { title: "Você recusou a chamada", message: "Sem problema! Se mudar de ideia, o conteúdo continua disponível." }
 };
@@ -174,7 +174,7 @@ vid.addEventListener("error", () => { if (mode === "call") { vid.style.display =
 $("#accept").onclick = accept;
 $("#decline").onclick = () => finish(true);
 $("#bEnd").onclick = () => finish(false);
-$("#again").onclick = () => show("incoming");
+//  $("#again").onclick = () => show("incoming");
 $("#bMic").onclick = e => { vid.muted = !vid.muted; e.currentTarget.classList.toggle("off", vid.muted); e.currentTarget.setAttribute("aria-pressed", vid.muted); };
 $("#bCam").onclick = e => { const h = $("#self").classList.toggle("hide"); e.currentTarget.classList.toggle("off", h); e.currentTarget.setAttribute("aria-pressed", h); };
 
