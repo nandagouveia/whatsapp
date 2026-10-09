@@ -43,14 +43,52 @@ class Failure(Exception):
     def __init__(self, status, message):
         self.status, self.message = status, message
 
+def database_error_code(error):
+    # Classify locally; never log the original exception/URI/password.
+    msg = str(error).lower()
+    state = getattr(error, 'sqlstate', None)
+    if state == '28P01' or 'password authentication failed' in msg:
+        return 'DB_PASSWORD', 'Senha do banco incorreta ou mal codificada na URI.'
+    if 'tenant or user not found' in msg:
+        return 'DB_POOLER_USER', 'Usuario/host do pooler incorreto. Copie a URI de Connect > Session pooler.'
+    if 'could not translate host' in msg or 'name or service not known' in msg or 'nodename nor servname' in msg:
+        return 'DB_HOST', 'Host nao encontrado. Confira a URI do Session pooler.'
+    if 'network is unreachable' in msg or 'cannot assign requested address' in msg:
+        return 'DB_NETWORK', 'Conexao inacessivel; use Session pooler IPv4 em vez de conexao direta IPv6.'
+    if 'timeout' in msg or 'timed out' in msg:
+        return 'DB_TIMEOUT', 'Conexao expirou. Confira se o projeto esta ativo, a porta e as restricoes de rede.'
+    if 'unsupported startup parameter' in msg or 'invalid startup parameter' in msg:
+        return 'DB_STARTUP', 'O pooler recusou um parametro de inicializacao.'
+    if 'invalid' in msg and ('uri' in msg or 'connection' in msg or 'integer' in msg):
+        return 'DB_URI', 'URI invalida. Confira formato e codificacao dos caracteres da senha.'
+    if 'ssl' in msg or 'certificate' in msg:
+        return 'DB_SSL', 'Falha SSL na conexao ao banco.'
+    if state == '42P01':
+        return 'DB_SCHEMA', 'Execute supabase.sql no SQL Editor do projeto correto.'
+    if state == '42501':
+        return 'DB_PERMISSION', 'A conexao ao banco nao tem a permissao necessaria.'
+    return 'DB_CONNECTION', 'Conexao recusada. Confira URI, senha, projeto ativo e restricoes de rede.'
+
+def report_database_error(error):
+    code, explanation = database_error_code(error)
+    print('SUPABASE_DB_ERROR [' + code + '] ' + explanation, flush=True)
+    return code
+
 def db():
     if not DATABASE_URL:
         raise Failure(503, 'Configure DATABASE_URL do Supabase no servidor.')
+    conn = None
     try:
-        return psycopg.connect(DATABASE_URL, row_factory=dict_row, connect_timeout=10,
-                               sslmode='require', prepare_threshold=None,
-                               options='-c statement_timeout=30000 -c lock_timeout=25000')
-    except psycopg.Error:
+        # Supabase pooler may reject libpq startup "options". Configure after connecting.
+        conn = psycopg.connect(DATABASE_URL, row_factory=dict_row, connect_timeout=10,
+                               sslmode='require', prepare_threshold=None)
+        conn.execute("SET statement_timeout = '30s'")
+        conn.execute("SET lock_timeout = '25s'")
+        conn.commit()
+        return conn
+    except psycopg.Error as error:
+        if conn is not None: conn.close()
+        report_database_error(error)
         raise Failure(503, 'Banco de dados indisponível. Confira a configuração do Supabase.')
 
 def storage_client():
@@ -263,7 +301,8 @@ def app(environ, start_response):
             raise Failure(404, 'Rota não encontrada.')
     except Failure as e:
         status, data = f'{e.status} Error', {'error': e.message}
-    except psycopg.Error:
+    except psycopg.Error as error:
+        report_database_error(error)
         status, data = '503 Service Unavailable', {'error': 'Banco indisponível. Confira a conexão e execute supabase.sql.'}
     except Exception:
         # Do not print provider payload, payer information or credentials.
