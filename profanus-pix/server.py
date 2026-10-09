@@ -106,13 +106,39 @@ def report_database_error(error):
     print('SUPABASE_DB_DETAIL ' + safe_database_detail(error), flush=True)
     return code
 
+def database_parameters():
+    # Parse the URI ourselves: libpq receives named fields, never a conninfo string.
+    uri = DATABASE_URL.strip(" \t\r\n\ufeff\u200b'\"`")
+    if uri.startswith('DATABASE_URL='):
+        uri = uri.split('=', 1)[1].strip(" \t\r\n'\"`")
+    try:
+        parsed = urlsplit(uri)
+        if parsed.scheme not in ('postgresql', 'postgres'):
+            raise ValueError('scheme')
+        if not parsed.hostname or not parsed.username or parsed.password is None:
+            raise ValueError('fields')
+        if parsed.fragment or not parsed.path.startswith('/') or not parsed.path[1:]:
+            raise ValueError('fragment or database')
+        # Query options must not silently change security or go unrecognised.
+        query = parse_qs(parsed.query, keep_blank_values=True)
+        if set(query) - {'sslmode'}:
+            raise ValueError('unsupported query option')
+        if any(c in uri for c in ('\r', '\n')):
+            raise ValueError('newline')
+        return {'host': parsed.hostname, 'port': parsed.port or 5432,
+                'user': unquote(parsed.username), 'password': unquote(parsed.password),
+                'dbname': unquote(parsed.path[1:])}
+    except ValueError:
+        print('SUPABASE_DB_ERROR [DB_URI_FORMAT] URI invalida. Copie a URI completa de Session pooler; codifique caracteres reservados da senha.', flush=True)
+        raise Failure(503, 'DATABASE_URL inválida. Confira a URI completa e a codificação da senha no Render.')
+
 def db():
     if not DATABASE_URL:
         raise Failure(503, 'Configure DATABASE_URL do Supabase no servidor.')
+    parameters = database_parameters()
     conn = None
     try:
-        # Supabase pooler may reject libpq startup "options". Configure after connecting.
-        conn = psycopg.connect(DATABASE_URL, row_factory=dict_row, connect_timeout=10,
+        conn = psycopg.connect(**parameters, row_factory=dict_row, connect_timeout=10,
                                sslmode='require', prepare_threshold=None)
         conn.execute("SET statement_timeout = '30s'")
         conn.execute("SET lock_timeout = '25s'")
