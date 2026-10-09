@@ -118,10 +118,10 @@ const CONFIG = {
   apelidos: ["meu amorzinho", "meu bem", "gatinho", "lindo", "meu docinho", "vida"],
 
   checkout: {
-    fotos: "https://exemplo.com/checkout-fotos",
-    videos: "https://exemplo.com/checkout-videos",
-    combo: "https://exemplo.com/checkout-combo",
-    perfil: "https://exemplo.com/meu-perfil",
+    fotos: "https://clubedosegredo.com/a7c93d58",
+    videos: "https://clubedosegredo.com/5d13cbf7",
+    combo: "https://clubedosegredo.com/7490f30c",
+    perfil: "#",
     chamada: "chamada-video.html"   // página do vídeo-mensagem (mesma pasta ou URL https)
   },
   prices: { fotos: "R$ 9,90", videos: "R$ 19,90", combo: "R$ 29,90" },
@@ -137,8 +137,8 @@ const CONFIG = {
     guarantee: "Se o acesso não chegar, devolvemos seu pagamento.",    // ex.: "Se o acesso não chegar, devolvemos seu pagamento"
     bonus: "Quem leva o combo ganha 1 vídeo bônus",        // ex.: "Quem leva o combo ganha 1 vídeo bônus"
     fatura: "Na fatura aparece como pagamento anônimo",       // ex.: "Na fatura aparece como: NOME DISCRETO"
-    audio: "",        // URL (https) de um áudio seu, curto e sem conteúdo explícito
-    preview: "",      // URL (https) de uma prévia CENSURADA
+    audio: "audio.mp3",        // URL (https) de um áudio seu, curto e sem conteúdo explícito
+    preview: "previa.jpg",      // URL (https) de uma prévia CENSURADA
     oldFotos: "R$ 17,90", oldVideos: "R$ 27,90", oldCombo: "R$ 59,90"  // preço "de" real (ex.: "R$ 00,00")
   },
 
@@ -207,17 +207,17 @@ const CONFIG = {
         { if: "testimonial", text: "💬 {{real.testimonial}}" },
         { if: "deadline", text: "⏰ A condição especial vai até {{prazo}}. Depois disso, volta ao valor normal." },
         { if: "slots", text: "Tenho {{vagas}} vaga(s) nessa condição." },
-        { type: "card", image: "demo:img:Prévia censurada:#075e54", alt: "Prévia censurada do pacote de fotos",
+        { type: "card", image: "previa2.jpg", alt: "Prévia censurada do pacote de fotos",
           title: "Pacote de fotos", price: "{{prices.fotos}}", old: "{{real.oldFotos}}",
           text: "",
           button: { label: "Quero as fotos 😍", url: "{{checkout.fotos}}" } },
-        { type: "card", image: "demo:img:Prévia censurada:#128c7e", alt: "Prévia censurada do pacote de vídeos",
+        { type: "card", image: "previa1.jpg", alt: "Prévia censurada do pacote de vídeos",
           title: "Pacote de vídeos", price: "{{prices.videos}}", old: "{{real.oldVideos}}",
           text: "Edite aqui: quantidade de vídeos, duração e formato.",
           button: { label: "Quero os vídeos 🔥", url: "{{checkout.videos}}" } },
-        { type: "card", hot: true, badge: "Minha indicação pra você 😈", image: "demo:img:Combo completo:#054d44", alt: "Prévia censurada do combo",
+        { type: "card", hot: true, badge: "Minha indicação pra você 😈", image: "previa3.png", alt: "Prévia censurada do combo",
           title: "Combo completo", price: "{{prices.combo}}", old: "{{real.oldCombo}}",
-          text: "Edite aqui: explique a vantagem real do combo (só diga que sai mais barato se for verdade).",
+          text: "Tudo em um lugar só, todos meus conteúdos prontos para você gozar gostoso.",
           button: { label: "Quero o combo completo 😈", url: "{{checkout.combo}}" } },
         { if: "bonus", text: "🎁 {{real.bonus}}" },
         { if: "guarantee", text: "🔒 {{real.guarantee}}" },
