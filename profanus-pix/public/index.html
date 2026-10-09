@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Chamada de vídeo</title>
+<style>
+:root{--bg:#0b141a;--green:#25d366;--red:#f15c6d;--text:#e9edef;--sub:#8696a0;--app-h:100dvh}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;overflow:hidden;background:#000}
+body{font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--text);display:flex;justify-content:center}
+.app{width:100%;max-width:480px;height:var(--app-h);position:relative;overflow:hidden;background:var(--bg)}
+@media(min-width:520px){body{align-items:center;background:#111}.app{height:min(var(--app-h),860px);border-radius:14px}}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;padding:max(28px,env(safe-area-inset-top)) 24px max(28px,env(safe-area-inset-bottom))}
+.screen.on{display:flex;animation:in .3s ease-out both}
+:focus-visible{outline:3px solid #53bdeb;outline-offset:3px}
+.notice{font-size:12px;color:var(--sub);text-align:center;max-width:320px}
+.avatar{border-radius:50%;object-fit:cover;background:#1f2c34}
+/* chamada recebida */
+#incoming{background:radial-gradient(circle at 50% 30%,#12333b,var(--bg) 70%);justify-content:space-between}
+.who{text-align:center;margin-top:8vh}
+.who h1{font-size:28px;font-weight:500;margin:22px 0 4px}
+.who p{color:var(--sub)}
+.pulse{position:relative;width:140px;height:140px;margin:0 auto}
+.pulse img{width:140px;height:140px;position:relative;z-index:1}
+.pulse::before,.pulse::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid #25d36688;animation:ring 2s infinite}
+.pulse::after{animation-delay:1s}
+.actions{display:flex;gap:64px;margin-bottom:12px}
+.fab{width:68px;height:68px;border-radius:50%;border:0;color:#fff;display:grid;place-items:center;cursor:pointer;transition:transform .1s}
+.fab:active{transform:scale(.93)}
+.fab.g{background:var(--green);animation:shake 1.4s infinite}.fab.r{background:var(--red)}
+.fab-wrap{text-align:center;font-size:13px;color:var(--sub)}.fab-wrap .fab{margin:0 auto 8px}
+/* em chamada */
+#call{padding:0;background:#000;justify-content:flex-start}
+#stage{position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(160deg,#0f3a40,#050b0e)}
+#vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
+#stage .avatar{width:150px;height:150px;opacity:.9}
+.top,.bottom{position:absolute;left:0;right:0;z-index:2;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 16px}
+.top{top:0;padding-top:max(14px,env(safe-area-inset-top));background:linear-gradient(#000a,transparent)}
+.top b{font-weight:600;font-size:18px}.top span{font-size:14px;color:#dfe5e7}
+.chip{font-size:11px;background:#0008;border:1px solid #fff3;border-radius:10px;padding:3px 9px;color:#cfd8dc}
+#cap{position:absolute;left:16px;right:16px;bottom:150px;z-index:2;text-align:center;font-size:17px;font-weight:600;text-shadow:0 1px 6px #000;min-height:26px}
+.bottom{bottom:0;padding-bottom:max(18px,env(safe-area-inset-bottom));background:linear-gradient(transparent,#000c)}
+.ctrls{display:flex;gap:16px}
+.cbtn{width:54px;height:54px;border-radius:50%;border:0;background:#ffffff26;color:#fff;display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(6px)}
+.cbtn.off{background:#fff;color:#111}.cbtn.end{background:var(--red)}
+#self{position:absolute;z-index:2;right:12px;top:calc(max(14px,env(safe-area-inset-top)) + 70px);width:96px;height:140px;border-radius:12px;background:linear-gradient(160deg,#2b3a42,#18242a);border:1px solid #fff3;display:grid;place-items:center;font-size:12px;color:var(--sub)}
+#self.hide{display:none}
+/* encerrada */
+#ended{background:var(--bg);justify-content:center;text-align:center;gap:14px}
+#ended h2{font-size:22px;font-weight:600}
+#ended .msg{color:#c3ccd1;max-width:320px}
+.cta{display:block;width:100%;max-width:320px;text-align:center;text-decoration:none;font:inherit;font-weight:700;border:0;cursor:pointer;background:var(--green);color:#06130b;border-radius:14px;padding:15px 18px;margin-top:8px}
+.cta[disabled]{opacity:.6;cursor:wait}
+.cta.sec{background:#ffffff1a;color:var(--text)}
+.link{background:none;border:0;color:#53bdeb;font:inherit;cursor:pointer;padding:8px}
+/* pagamento */
+#pay{background:var(--bg);justify-content:center;text-align:center;gap:12px;overflow-y:auto}
+#pay h2{font-size:22px;font-weight:600}
+.price{font-size:34px;font-weight:700;color:var(--green)}
+#qr{width:210px;height:210px;background:#fff;border-radius:12px;padding:8px;display:none}
+#code{width:100%;max-width:320px;height:70px;resize:none;background:#1f2c34;color:var(--text);border:1px solid #fff2;border-radius:10px;padding:8px;font:12px/1.3 monospace;display:none}
+#payState{font-size:14px;color:#c3ccd1;min-height:20px}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid #fff4;border-top-color:var(--green);border-radius:50%;animation:rot 1s linear infinite;margin-right:6px;vertical-align:-1px}
+/* vídeo completo */
+#full{padding:0;background:#000;justify-content:center}
+#fullVid{width:100%;height:100%;object-fit:contain;background:#000}
+@keyframes in{from{opacity:0}to{opacity:1}}
+@keyframes ring{from{transform:scale(1);opacity:.9}to{transform:scale(1.8);opacity:0}}
+@keyframes shake{0%,60%,100%{transform:none}10%,30%,50%{transform:rotate(-8deg)}20%,40%{transform:rotate(8deg)}}
+@keyframes rot{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <section class="screen on" id="incoming" aria-label="Chamada de vídeo recebida">
+    <div class="who">
+      <div class="pulse"><img class="avatar" id="av1" alt="Foto" width="140" height="140"></div>
+      <h1 id="n1"></h1>
+      <p>Chamada de vídeo</p>
+    </div>
+    <div>
+      <div class="actions">
+        <div class="fab-wrap"><button class="fab r" id="decline" type="button" aria-label="Recusar"><svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 9c-1.6 0-3.1.3-4.6.7v3.1c0 .4-.2.7-.6.9-.9.5-1.7 1-2.4 1.7-.2.2-.4.3-.7.3s-.5-.1-.7-.3L.3 13.7a1 1 0 0 1-.3-.7c0-.3.1-.5.3-.7C3.3 9.5 7.4 8 12 8s8.7 1.5 11.7 4.3c.2.2.3.4.3.7s-.1.5-.3.7l-2.4 2.4c-.2.2-.4.3-.7.3s-.5-.1-.7-.3c-.7-.7-1.5-1.2-2.4-1.7-.4-.2-.6-.5-.6-.9V9.7C15.1 9.3 13.6 9 12 9z"/></svg></button>Recusar</div>
+        <div class="fab-wrap"><button class="fab g" id="accept" type="button" aria-label="Atender"><svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4z"/></svg></button>Atender</div>
+      </div>
+      <p class="notice" id="n18"></p>
+    </div>
+  </section>
+
+  <section class="screen" id="call" aria-label="Em chamada">
+    <div id="stage"><img class="avatar" id="av2" alt="" width="150" height="150"><video id="vid" playsinline preload="auto"></video></div>
+    <div class="top"><b id="n2"></b><span id="time">00:00</span><span class="chip" id="chip"></span></div>
+    <div id="self" aria-hidden="true">Você</div>
+    <div id="cap" aria-live="polite"></div>
+    <div class="bottom"><div class="ctrls">
+      <button class="cbtn" id="bMic" type="button" aria-label="Silenciar" aria-pressed="false"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-3.1A7 7 0 0 0 19 11z"/></svg></button>
+      <button class="cbtn" id="bCam" type="button" aria-label="Câmera" aria-pressed="false"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4z"/></svg></button>
+      <button class="cbtn end" id="bEnd" type="button" aria-label="Encerrar chamada"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 9c-1.6 0-3.1.3-4.6.7v3.1c0 .4-.2.7-.6.9-.9.5-1.7 1-2.4 1.7-.2.2-.4.3-.7.3s-.5-.1-.7-.3L.3 13.7a1 1 0 0 1-.3-.7c0-.3.1-.5.3-.7C3.3 9.5 7.4 8 12 8s8.7 1.5 11.7 4.3c.2.2.3.4.3.7s-.1.5-.3.7l-2.4 2.4c-.2.2-.4.3-.7.3s-.5-.1-.7-.3c-.7-.7-1.5-1.2-2.4-1.7-.4-.2-.6-.5-.6-.9V9.7C15.1 9.3 13.6 9 12 9z"/></svg></button>
+    </div></div>
+  </section>
+
+  <section class="screen" id="ended" aria-label="Chamada encerrada">
+    <img class="avatar" id="av3" alt="" width="96" height="96">
+    <h2 id="endTitle"></h2>
+    <p class="msg" id="endMsg"></p>
+    <button class="cta" id="cta" type="button"></button>
+    <button class="link" id="again" type="button" hidden>Ver a chamada de novo</button>
+  </section>
+
+  <section class="screen" id="pay" aria-label="Pagamento via Pix">
+    <h2>Liberar vídeo completo</h2>
+    <div class="price" id="price"></div>
+    <p class="notice">Pagamento único via Pix. O vídeo é liberado automaticamente após a confirmação.</p>
+    <img id="qr" alt="QR Code Pix">
+    <textarea id="code" readonly aria-label="Pix copia e cola"></textarea>
+    <button class="cta" id="bGen" type="button">Gerar Pix</button>
+    <button class="cta sec" id="bCopy" type="button" hidden>Copiar código Pix</button>
+    <p id="payState" aria-live="polite"></p>
+    <button class="link" id="payBack" type="button">Voltar</button>
+  </section>
+
+  <section class="screen" id="full" aria-label="Vídeo completo">
+    <video id="fullVid" controls playsinline controlslist="nodownload"></video>
+  </section>
+</div>
+
+<script>
+/* =====================================================================
+   CONFIGURAÇÃO — edite aqui.
+
+   IMPORTANTE (mantenha honesto):
+   • Esta página SIMULA a aparência de uma chamada, mas toca um vídeo-
+     mensagem GRAVADO. Não afirme que é ao vivo. O selo "chip" deve
+     continuar visível e dizer que é gravado.
+   • Use apenas vídeo seu, sem nudez nem conteúdo explícito, e só
+     publique para maiores de 18 anos.
+   • Não use logotipo nem nome de apps de terceiros.
+   ===================================================================== */
+const CONFIG = {
+  name: "Nanda Gouveia",
+  photo: "perfil.jpg",
+  video: "video.mp4",
+  fallbackSeconds: 25,
+  chip: "Vídeo-mensagem gravado",
+  age: "Ao atender, você confirma que tem 18 anos ou mais.",
+  captions: [
+    { at: 1,  text: "Oi, que bom que você atendeu 😊" },
+    { at: 6,  text: "Ta gostando amor?" },
+    { at: 12, text: "Tem conteúdo novo esperando por você." },
+    { at: 18, text: "Toque no botão no final pra conferir 💕" }
+  ],
+  end: {
+    title: "Chamada encerrada",
+    message: "Quer ver o vídeo completo? Faça um Pix de R$ 20,00 e ele é liberado na hora.",
+    button: "Ver vídeo completo por R$ 20,00"
+  },
+  declined: { title: "Você recusou a chamada", message: "Sem problema! Se mudar de ideia, o vídeo completo continua disponível por R$ 20,00." },
+
+  /* PIX — precisa de um backend seu (veja as instruções) */
+  pix: {
+    amount: 20.00,
+    createUrl: "/api/pix/criar",   // POST {amount} -> { id, qr, code }
+    statusUrl: "/api/pix/status",  // GET ?id=... -> { status: "pending"|"paid"|"expired", videoUrl? }
+    pollMs: 4000
+  },
+  /* usado só se pix.createUrl estiver vazio (link de checkout externo) */
+  fallbackCheckoutUrl: ""
+};
+
+const $ = s => document.querySelector(s);
+const screens = { incoming: $("#incoming"), call: $("#call"), ended: $("#ended"), pay: $("#pay"), full: $("#full") };
+const vid = $("#vid");
+let timer = null, sec = 0, mode = "incoming", poll = null, pixId = null, checking = false;
+
+function show(n) { Object.entries(screens).forEach(([k, s]) => s.classList.toggle("on", k === n)); mode = n; }
+const fmt = s => String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
+const brl = v => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+function avatar() {
+  if (CONFIG.photo) return CONFIG.photo;
+  const i = (CONFIG.name.trim()[0] || "A").toUpperCase().replace(/[<&]/g, "");
+  return "data:image/svg+xml," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='200' height='200' fill='#128c7e'/><text x='100' y='132' font-family='sans-serif' font-size='96' font-weight='700' fill='#fff' text-anchor='middle'>${i}</text></svg>`);
+}
+function setCaption(t) {
+  let c = ""; CONFIG.captions.forEach(x => { if (t >= x.at) c = x.text; });
+  $("#cap").textContent = c;
+}
+function tick() {
+  sec++; $("#time").textContent = fmt(sec); setCaption(vid.style.display === "block" ? vid.currentTime : sec);
+  if (vid.style.display !== "block" && sec >= CONFIG.fallbackSeconds) finish(false);
+}
+function accept() {
+  show("call"); sec = 0; $("#time").textContent = "00:00"; $("#cap").textContent = "";
+  vid.muted = false; $("#bMic").classList.remove("off"); $("#bMic").setAttribute("aria-pressed", "false");
+  if (CONFIG.video) {
+    vid.src = CONFIG.video; vid.style.display = "block"; vid.currentTime = 0;
+    vid.play().catch(() => { vid.muted = true; vid.play().catch(() => {}); });
+  } else vid.style.display = "none";
+  clearInterval(timer); timer = setInterval(tick, 1000);
+}
+function finish(declined) {
+  clearInterval(timer); vid.pause();
+  const d = declined ? CONFIG.declined : { title: CONFIG.end.title + " · " + fmt(sec), message: CONFIG.end.message };
+  $("#endTitle").textContent = d.title; $("#endMsg").textContent = d.message;
+  show("ended");
+}
+
+/* ---------- Pix ---------- */
+function stopPoll() { clearTimeout(poll); poll = null; }
+function setState(message, busy = false) {
+  const box = $("#payState"); box.replaceChildren();
+  if (busy) { const spin = document.createElement("span"); spin.className = "spin"; box.append(spin); }
+  box.append(document.createTextNode(message));
+}
+function schedulePoll() {
+  stopPoll(); if (pixId && mode === "pay") poll = setTimeout(checkPix, CONFIG.pix.pollMs);
+}
+async function api(url, options = {}) {
+  const r = await fetch(url, { ...options, credentials: "same-origin", cache: "no-store",
+    headers: { "Content-Type": "application/json", "X-Pix-Client": "1", ...(options.headers || {}) },
+    signal: AbortSignal.timeout(30000) });
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error || "Não foi possível consultar o pagamento.");
+  return d;
+}
+function displayPix(d) {
+  pixId = d.id;
+  $("#code").value = d.code; $("#code").style.display = "block";
+  if (d.qr) { $("#qr").src = d.qr.startsWith("data:image/") ? d.qr : "data:image/png;base64," + d.qr; $("#qr").style.display = "block"; }
+  else $("#qr").style.display = "none";
+  $("#bGen").hidden = true; $("#bCopy").hidden = false;
+  setState("Aguardando confirmação do pagamento…", true);
+  schedulePoll();
+}
+async function openPay() {
+  show("pay");
+  if (pixId) { checkPix(); return; }
+  $("#bGen").disabled = true; setState("Consultando seu pedido…", true);
+  try {
+    const d = await api("/api/pix/atual");
+    if (d.id && d.code) { displayPix(d); await checkPix(); }
+    else setState("");
+  } catch (e) { setState(e.message); }
+  finally { $("#bGen").disabled = false; }
+}
+async function genPix() {
+  const b = $("#bGen"); if (b.disabled) return;
+  b.disabled = true; setState("Gerando Pix…", true);
+  try {
+    const d = await api(CONFIG.pix.createUrl, { method: "POST", body: "{}" });
+    if (!d.id || !d.code) throw new Error("O gateway não retornou um código Pix válido.");
+    displayPix(d); await checkPix();
+  } catch (e) { setState(e.message); }
+  finally { b.disabled = false; }
+}
+async function checkPix() {
+  if (!pixId || mode !== "pay" || checking) return;
+  const id = pixId; checking = true; stopPoll();
+  try {
+    const d = await api(CONFIG.pix.statusUrl + "?id=" + encodeURIComponent(id));
+    if (pixId !== id || mode !== "pay") return;
+    if (d.status === "paid" && d.videoUrl) { unlock(d.videoUrl); return; }
+    if (d.status === "expired" || d.status === "cancelled") {
+      pixId = null; $("#qr").style.display = $("#code").style.display = "none";
+      $("#bCopy").hidden = true; $("#bGen").hidden = false;
+      setState(d.status === "cancelled" ? "Esse Pix foi cancelado. Gere um novo." : "Esse Pix expirou. Gere um novo.");
+    } else setState("Aguardando confirmação do pagamento…", true);
+  } catch (e) { if (mode === "pay") setState(e.message + " Tentaremos novamente."); }
+  finally { checking = false; schedulePoll(); }
+}
+function unlock(url) {
+  const v = $("#fullVid"); v.src = url; show("full");
+  v.play().catch(() => {});
+}
+async function copyCode() {
+  const t = $("#code"); t.select();
+  try { await navigator.clipboard.writeText(t.value); } catch (e) { document.execCommand("copy"); }
+  $("#bCopy").textContent = "Código copiado ✓";
+  setTimeout(() => { $("#bCopy").textContent = "Copiar código Pix"; }, 2000);
+}
+
+vid.addEventListener("ended", () => finish(false));
+vid.addEventListener("error", () => { if (mode === "call") { vid.style.display = "none"; } });
+$("#accept").onclick = accept;
+$("#decline").onclick = () => finish(true);
+$("#bEnd").onclick = () => finish(false);
+$("#cta").onclick = openPay;
+$("#bGen").onclick = genPix;
+$("#bCopy").onclick = copyCode;
+$("#payBack").onclick = () => { stopPoll(); show("ended"); };
+$("#bMic").onclick = e => { vid.muted = !vid.muted; e.currentTarget.classList.toggle("off", vid.muted); e.currentTarget.setAttribute("aria-pressed", vid.muted); };
+$("#bCam").onclick = e => { const h = $("#self").classList.toggle("hide"); e.currentTarget.classList.toggle("off", h); e.currentTarget.setAttribute("aria-pressed", h); };
+
+/* aplicar configuração */
+(function init() {
+  const a = avatar();
+  ["av1", "av2", "av3"].forEach(id => { $("#" + id).src = a; });
+  $("#n1").textContent = $("#n2").textContent = CONFIG.name;
+  $("#chip").textContent = CONFIG.chip; $("#n18").textContent = CONFIG.age;
+  $("#cta").textContent = CONFIG.end.button;
+  $("#price").textContent = brl(CONFIG.pix.amount);
+  document.title = CONFIG.name + " · Chamada de vídeo";
+  const fit = () => { const v = window.visualViewport; document.documentElement.style.setProperty("--app-h", (v ? v.height : innerHeight) + "px"); };
+  fit(); addEventListener("resize", fit);
+  $("#cta").disabled = true;
+  api("/api/config").then(d => {
+    CONFIG.pix.amount = d.amount;
+    $("#price").textContent = brl(d.amount);
+    $("#cta").textContent = "Ver vídeo completo por " + brl(d.amount);
+    CONFIG.end.message = "Quer ver o vídeo completo? Pague " + brl(d.amount) + " via Pix. O acesso é liberado após a confirmação.";
+    CONFIG.declined.message = "Sem problema! O vídeo completo continua disponível por " + brl(d.amount) + ".";
+    $("#cta").disabled = false;
+  }).catch(() => { $("#cta").textContent = "Pagamento indisponível. Recarregue a página."; });
+})();
+</script>
+</body>
+</html>
