@@ -1,1 +1,607 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Atendimento virtual +18</title>
+<style>
+:root{--header:#075e54;--accent:#128c7e;--user:#d9fdd3;--bot:#fff;--bg:#efeae2;--text:#111b21;--app-h:100dvh}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;overflow:hidden}
+body{font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--text);background:#d1d7db;display:flex;justify-content:center}
+.app{width:100%;max-width:480px;height:var(--app-h);display:flex;flex-direction:column;background:var(--bg);position:relative;overflow:hidden}
+@media(min-width:520px){body{align-items:center;background:linear-gradient(#00a884 0 128px,#d1d7db 128px)}.app{height:min(var(--app-h),860px);border-radius:12px;box-shadow:0 8px 40px #0003}}
+header{background:var(--header);color:#fff;display:flex;align-items:center;gap:12px;padding:10px 12px;padding-top:max(10px,env(safe-area-inset-top))}
+header img{width:42px;height:42px;border-radius:50%;object-fit:cover;background:#fff3}
+.info{flex:1;min-width:0}.info b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.info small{font-size:13px;opacity:.85}
+.icon-btn{background:none;border:0;color:#fff;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;cursor:pointer}
+.icon-btn:hover{background:#fff2}
+:focus-visible{outline:3px solid #53bdeb;outline-offset:2px}
+.wrap{flex:1;position:relative;min-height:0}
+#chat{height:100%;overflow-y:auto;padding:12px 10px 8px;display:flex;flex-direction:column;gap:3px;overscroll-behavior:contain;
+background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cg fill='none' stroke='%23000' stroke-opacity='.05' stroke-width='1.5'%3E%3Ccircle cx='15' cy='15' r='5'/%3E%3Cpath d='M50 12l8 8M58 12l-8 8'/%3E%3Cpath d='M12 55q6-8 12 0t12 0'/%3E%3Crect x='52' y='52' width='10' height='10' rx='3'/%3E%3C/g%3E%3C/svg%3E")}
+.pill{align-self:center;background:#fff9;color:#54656f;font-size:12px;text-align:center;padding:6px 12px;border-radius:10px;margin-bottom:8px;max-width:92%}
+.row{display:flex;max-width:84%;animation:in .22s ease-out both}
+.row.bot{align-self:flex-start}.row.user{align-self:flex-end}
+.row.tail{margin-top:6px}
+.bubble{position:relative;padding:6px 9px 4px;border-radius:9px;box-shadow:0 1px 1px #0002;overflow-wrap:anywhere;min-width:0}
+.bot .bubble{background:var(--bot);border-top-left-radius:2px}
+.user .bubble{background:var(--user);border-top-right-radius:2px}
+.row:not(.tail) .bubble{border-radius:9px}
+.bubble p{white-space:pre-wrap;font-size:15.5px}
+.meta{display:flex;justify-content:flex-end;align-items:center;gap:3px;font-size:11px;color:#667781;margin-top:1px}
+.ticks{color:#8696a0;display:inline-flex}.ticks path{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.ticks:not(.d) .c2{display:none}.ticks.r{color:#53bdeb}
+.bubble img.pic{display:block;width:100%;max-width:300px;border-radius:7px;margin-bottom:3px}
+.bubble audio{display:block;width:min(260px,66vw);height:40px}
+.card{width:min(280px,70vw)}.card h3{font-size:16px;margin:2px 0}.card p{color:#3b4a54;font-size:14.5px;margin-bottom:8px}
+.card p.price{color:var(--header);font-weight:700;font-size:16px;margin-top:-4px}
+.card p.price s{color:#8696a0;font-weight:400;font-size:14px;margin-right:6px}
+.card.hot{outline:2px solid var(--accent)}
+.badge{display:inline-block;background:var(--accent);color:#fff;font-size:11px;font-weight:700;border-radius:8px;padding:2px 8px;margin-bottom:4px}
+.cbtn,.qbtn{font:inherit;font-weight:600;color:var(--accent);background:#fff;border:1px solid #d5dde1;border-radius:18px;padding:8px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;justify-content:center;transition:background .15s,transform .1s}
+.cbtn{width:100%;border-radius:8px;background:var(--accent);color:#fff;border-color:var(--accent)}
+.cbtn:hover:not(:disabled){filter:brightness(1.08)}
+.qbtn:hover:not(:disabled){background:#f0f7f6}.cbtn:active:not(:disabled),.qbtn:active:not(:disabled){transform:scale(.97)}
+.cbtn:disabled{opacity:.5;cursor:default}
+.quick{align-self:flex-end;display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;max-width:92%;margin:6px 0 2px;animation:in .25s ease-out both}
+.qbtn{box-shadow:0 1px 1px #0002}
+.typing .bubble{display:flex;gap:4px;padding:11px 12px}
+.typing i{width:7px;height:7px;border-radius:50%;background:#8696a0;animation:dot 1.1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+#down{position:absolute;right:12px;bottom:10px;border:0;border-radius:16px;padding:7px 12px;background:var(--accent);color:#fff;font:600 13px inherit;font-family:inherit;box-shadow:0 2px 6px #0004;cursor:pointer}
+#down[hidden]{display:none}
+footer{padding:8px 8px max(8px,env(safe-area-inset-bottom));background:#f0f2f5}
+form{display:flex;gap:8px;align-items:center}
+#input{flex:1;min-width:0;font:inherit;border:0;border-radius:22px;padding:11px 16px;background:#fff}
+#send{width:44px;height:44px;border:0;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;cursor:pointer;flex:none;transition:opacity .15s}
+#send:disabled{opacity:.45;cursor:not-allowed}
+@keyframes in{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes dot{0%,60%,100%{transform:none;opacity:.5}30%{transform:translateY(-4px);opacity:1}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <img id="avatar" alt="Foto do atendimento" width="42" height="42">
+    <div class="info"><b id="name"></b><small id="status"></small></div>
+    <button class="icon-btn" id="restart" type="button" aria-label="Reiniciar conversa" title="Reiniciar conversa">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+    </button>
+  </header>
+  <div class="wrap">
+    <main id="chat" role="log" aria-live="polite" aria-label="Conversa"></main>
+    <button id="down" type="button" hidden>↓ Nova mensagem</button>
+  </div>
+  <footer>
+    <form id="form" autocomplete="off">
+      <input id="input" type="text" maxlength="200" enterkeyhint="send" aria-label="Digite sua mensagem">
+      <button id="send" type="submit" aria-label="Enviar mensagem">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.4 20.4 21 12 3.4 3.6 3.3 10l12.6 2-12.6 2z"/></svg>
+      </button>
+    </form>
+  </footer>
+</div>
 
+<script>
+/* =====================================================================
+   CONFIGURAÇÃO — edite aqui. A lógica fica mais abaixo.
+
+   REGRAS PARA PUBLICAR:
+   • Venda apenas conteúdo SEU ou autorizado por escrito por todos os
+     envolvidos, todos maiores de 18 anos.
+   • Use plataforma de pagamento com verificação de idade/identidade.
+   • Prévias sempre censuradas. Nada explícito nesta página.
+   • GATILHOS SÓ COM DADOS REAIS: prazo, vagas, prova social, garantia,
+     bônus e preço "de" só aparecem se você preencher em "offer"/"real".
+     Campo vazio = a mensagem some sozinha. Nunca invente número,
+     depoimento ou urgência: isso queima sua reputação e pode violar
+     o Código de Defesa do Consumidor e as regras da plataforma.
+
+   O QUE MUDOU NESTA VERSÃO (técnicas de persuasão honesta):
+   1. Personalização: o cliente diz o que curte (fotos/vídeos/ambos) e
+      a oferta já vem "sob medida" (compromisso pequeno -> compra).
+   2. Curiosidade + reciprocidade: áudio e prévia censurada como "presente".
+   3. Ancoragem: preço "de/por" (só se for real) e combo destacado.
+   4. Prova social, bônus e garantia (só se reais).
+   5. Tratamento de objeções: preço, medo de golpe, discrição.
+   6. Lembrete automático se o cliente ficar parado (1 vez só).
+   7. Fechamento direto: botão de compra em toda saída.
+   ===================================================================== */
+const CONFIG = {
+  storageKey: "chat-adulto-v3",
+  profile: { name: "Nanda Gouveia", status: "Atendimento virtual · +18", photo: "https://blog.privacy.com.br/wp-content/uploads/2026/06/GY4lvwuWAAAfnvt.png" },
+  colors: { header: "#075e54", accent: "#128c7e", userBubble: "#d9fdd3", botBubble: "#ffffff", background: "#efeae2", text: "#111b21" },
+  apelidos: ["meu amorzinho", "meu bem", "gatinho", "lindo", "meu docinho", "vida"],
+
+  checkout: {
+    fotos: "https://exemplo.com/checkout-fotos",
+    videos: "https://exemplo.com/checkout-videos",
+    combo: "https://exemplo.com/checkout-combo",
+    perfil: "https://exemplo.com/meu-perfil",
+    chamada: "chamada-video.html"   // página do vídeo-mensagem (mesma pasta ou URL https)
+  },
+  prices: { fotos: "R$ 9,90", videos: "R$ 19,90", combo: "R$ 29,90" },
+
+  /* Só preencha se for VERDADE. Ex.: prazo "2026-10-31T23:59:00-03:00", vagas 10 */
+  offer: { deadline:"prazo, 2026-10-31T23:59:00-03:00", "apenas 10 vagas", slots: null },
+
+  /* Dados reais opcionais (vazio = não aparece) */
+  real: {
+    proof: "15 pessoas acabaram de receber o acesso",        // ex.: "+300 pessoas já receberam o acesso"
+    testimonial: "Amei o conteúdo! Muito safada essa putinha",  // ex.: "Amei o conteúdo! — cliente (com autorização)"
+    testimonial: "Ela é muito cachorra, muito gostosa",  // ex.: "Amei o conteúdo! — cliente (com autorização)"
+    guarantee: "Se o acesso não chegar, devolvemos seu pagamento.",    // ex.: "Se o acesso não chegar, devolvemos seu pagamento"
+    bonus: "Quem leva o combo ganha 1 vídeo bônus",        // ex.: "Quem leva o combo ganha 1 vídeo bônus"
+    fatura: "Na fatura aparece como pagamento anônimo",       // ex.: "Na fatura aparece como: NOME DISCRETO"
+    audio: "",        // URL (https) de um áudio seu, curto e sem conteúdo explícito
+    preview: "",      // URL (https) de uma prévia CENSURADA
+    oldFotos: "R$ 17,90", oldVideos: "R$ 27,90", oldCombo: "R$ 59,90"  // preço "de" real (ex.: "R$ 00,00")
+  },
+
+  typing: { base: 600, perChar: 18, max: 2200 },
+  texts: {
+    placeholder: "Digite uma mensagem",
+    typing: "digitando…",
+    restart: "Reiniciar conversa",
+    confirmRestart: "Reiniciar a conversa? O progresso será apagado.",
+    disclaimer: "+18 · Conteúdo adulto. Experiência automatizada independente, sem vínculo oficial com o WhatsApp.",
+    invalidName: "Não consegui entender seu nome 😅 Pode digitar só o primeiro nome?",
+    notUnderstood: "Não entendi, {{apelido}} 😅 Toque em uma das opções abaixo.",
+    done: "Pronto! Se precisar, é só escolher outra opção.",
+    newMsg: "↓ Nova mensagem"
+  },
+  start: "boas_vindas",
+  blockedStep: "bloqueado",
+  steps: [
+    { id: "boas_vindas", type: "choice",
+      messages: [
+        { text: "Oi meu amor 💕 pronto pra ter TUDO de mim sem censura?" },
+        { text: "Este é um canal de conteúdo adulto, só para maiores de 18 anos." },
+        { text: "Antes de continuar: você tem 18 anos ou mais amor?" }
+      ],
+      options: [
+        { label: "Tenho 18 anos ou mais", next: "nome" },
+        { label: "Sou menor de 18 anos", next: "bloqueado", block: true }
+      ] },
+
+    { id: "bloqueado", type: "message",
+      messages: [{ text: "Este conteúdo é exclusivo para maiores de 18 anos, então não posso continuar. Obrigada pela compreensão." }] },
+
+    { id: "nome", type: "input", variable: "nome", validate: "name", placeholder: "Digite seu nome", next: "gosto",
+      messages: [{ text: "Aiii, agora sim amor! 😏" }, { text: "Antes de mais nada… como eu posso te chamar meu benzinho?" }] },
+
+    { id: "gosto", type: "choice",
+      messages: [
+        { text: "{{nome}}… gostei do nome bebê 😘 Fica entre nós: eu não mostro tudo pra todo mundo." },
+        { text: "Eu sou a ruivinha com a bucetinha mais rosa do 🇧🇷 e top 1 do privacy!! Sim sou esposa do Manoel Gomes, mas sempre fui putinha e gosto de ver todos safadinhos gozando gostoso pra mim 💦" },
+        { text: "Mas com você eu quero acertar em cheio, {{apelido}}. O que te deixa mais curioso?" }
+      ],
+      options: [
+        { label: "Fotos 📸", set: { gosto: "fotos", frase: "Fotos são pra quem gosta de se demorar em cada detalhe 😏" }, next: "convite" },
+        { label: "Vídeos 🎬", set: { gosto: "videos", frase: "Vídeos são pra quem quer sentir que está ali comigo 😈" }, next: "convite" },
+        { label: "Os dois 🔥", set: { gosto: "combo", frase: "Os dois… você não é de meias medidas, né? Adoro 😈" }, next: "convite" }
+      ] },
+
+    { id: "convite", type: "choice",
+      messages: [
+        { text: "Boa escolha, {{nome}}. {{frase}}" },
+        { text: "Quero fazer uma vídeo-chamada pra quem chega até aqui 🎥 Estou bem gostosa te esperando!!" },
+        { text: "Posso te ligar agora, {{apelido}}? Ele abre em outra aba, e quando voltar eu te mostro os pacotes." }
+      ],
+      options: [
+        { label: "Atender VÍDEO CHAMADA 🎥", url: "{{checkout.chamada}}", next: "oferta" },
+        { label: "Pular e ver os pacotes", next: "oferta" }
+      ] },
+
+    { id: "oferta", type: "choice",
+      messages: [
+        { text: "Agora sim amorzinho, {{nome}} 😏 Olha o que preparei pra você." },
+        { if: "audio", type: "audio", src: "{{real.audio}}" },
+        { text: "Preparei isso com carinho, e o melhor fica do lado de dentro 🙈 Olha uma prévia:" },
+        { if: "preview", type: "image", src: "{{real.preview}}", alt: "Prévia censurada", caption: "Isso é só o começo 😉" },
+        { if: "proof", text: "⭐ {{real.proof}}" },
+        { if: "testimonial", text: "💬 {{real.testimonial}}" },
+        { if: "deadline", text: "⏰ A condição especial vai até {{prazo}}. Depois disso, volta ao valor normal." },
+        { if: "slots", text: "Tenho {{vagas}} vaga(s) nessa condição." },
+        { type: "card", image: "demo:img:Prévia censurada:#075e54", alt: "Prévia censurada do pacote de fotos",
+          title: "Pacote de fotos", price: "{{prices.fotos}}", old: "{{real.oldFotos}}",
+          text: "",
+          button: { label: "Quero as fotos 😍", url: "{{checkout.fotos}}" } },
+        { type: "card", image: "demo:img:Prévia censurada:#128c7e", alt: "Prévia censurada do pacote de vídeos",
+          title: "Pacote de vídeos", price: "{{prices.videos}}", old: "{{real.oldVideos}}",
+          text: "Edite aqui: quantidade de vídeos, duração e formato.",
+          button: { label: "Quero os vídeos 🔥", url: "{{checkout.videos}}" } },
+        { type: "card", hot: true, badge: "Minha indicação pra você 😈", image: "demo:img:Combo completo:#054d44", alt: "Prévia censurada do combo",
+          title: "Combo completo", price: "{{prices.combo}}", old: "{{real.oldCombo}}",
+          text: "Edite aqui: explique a vantagem real do combo (só diga que sai mais barato se for verdade).",
+          button: { label: "Quero o combo completo 😈", url: "{{checkout.combo}}" } },
+        { if: "bonus", text: "🎁 {{real.bonus}}" },
+        { if: "guarantee", text: "🔒 {{real.guarantee}}" },
+        { text: "É só tocar no botão, {{apelido2}}: em poucos toques você finaliza na página de pagamento e já entra 💕" }
+      ],
+      options: [
+        { label: "Ficou caro pra mim", next: "obj_preco" },
+        { label: "Tenho medo de golpe", next: "d_seguro" },
+        { label: "O que eu vou receber?", next: "recebo" },
+        { label: "Vou pensar um pouquinho", next: "pensar" }
+      ] },
+
+    { id: "obj_preco", type: "choice",
+      messages: [
+        { text: "Te entendo, {{nome}}, sem drama 💕 Cada um no seu momento." },
+        { text: "Se você só quer conhecer meu conteúdo, o pacote de fotos é a porta de entrada: {{prices.fotos}} e você já vê o que é meu trabalho." },
+        { if: "deadline", text: "E esse valor vale até {{prazo}}." },
+        { text: "Quando quiser mais, o combo está lá esperando por você 😉" }
+      ],
+      options: [
+        { label: "Começar pelas fotos 😍", url: "{{checkout.fotos}}" },
+        { label: "Ir pro combo 😈", url: "{{checkout.combo}}" },
+        { label: "Ver os pacotes de novo", next: "oferta" }
+      ] },
+
+    { id: "pensar", type: "choice",
+      nudgeAfter: 45000,
+      nudge: [
+        { text: "Oi, {{nome}} 💕 Ainda tô por aqui. Bateu alguma dúvida?" },
+        { if: "deadline", text: "Só avisando com carinho: a condição termina em {{prazo}}." },
+        { text: "O botão do combo está logo aí embaixo se você quiser 😈" }
+      ],
+      messages: [
+        { text: "Sem pressa, {{apelido}} 💕 Ninguém é obrigado a nada." },
+        { if: "deadline", text: "Só lembrando: a condição especial termina em {{prazo}}." },
+        { text: "Se bater qualquer dúvida, me pergunta. Quando decidir, os botões estarão aqui." }
+      ],
+      options: [
+        { label: "Ir direto pro combo 😈", url: "{{checkout.combo}}" },
+        { label: "Ver os pacotes de novo", next: "oferta" },
+        { label: "Tenho uma dúvida", next: "duvidas" }
+      ] },
+
+    { id: "recebo", type: "choice",
+      messages: [
+        { text: "Boa pergunta, {{nome}}! 😉 📸 Você recebe um pacote com 20 fotos, ou 20 vídeos ou o combo se for escolhido, exclusivas em formato digital. 🔓 Após a confirmação do pagamento, acesse as fotos pelo link disponibilizado na plataforma de compra. 📱 Confira na página de pagamento o prazo de acesso e se os arquivos estão disponíveis para download." },
+        { text: "Tudo é conteúdo próprio, feito por mim, para maiores de 18 anos." },
+        { text: "O acesso é liberado pela plataforma de pagamento depois da confirmação." }
+      ],
+      options: [
+        { label: "Quero ver os pacotes 🔥", next: "oferta" },
+        { label: "Ir direto pro combo 😈", url: "{{checkout.combo}}" },
+        { label: "Ver meu perfil ↗", url: "{{checkout.perfil}}" }
+      ] },
+
+    { id: "duvidas", type: "choice",
+      messages: [{ text: "Pode perguntar, {{apelido}}. Qual é a sua dúvida?" }],
+      options: [
+        { label: "Como eu pago?", next: "d_pagar" },
+        { label: "Como recebo o acesso?", next: "d_acesso" },
+        { label: "É seguro e discreto?", next: "d_seguro" },
+        { label: "Voltar aos pacotes", next: "oferta" }
+      ] },
+
+    { id: "d_pagar", type: "choice",
+      messages: [{ text: "O pagamento é feito na página da plataforma, não aqui no chat. Lá você vê as formas de pagamento disponíveis." }],
+      options: [{ label: "Ver os pacotes 🔥", next: "oferta" }, { label: "Outra dúvida", next: "duvidas" }] },
+
+    { id: "d_acesso", type: "choice",
+      messages: [{ text: "Depois que o pagamento é confirmado, eu vou liberar o acesso para você na minha plataforma." }],
+      options: [{ label: "Ver os pacotes 🔥", next: "oferta" }, { label: "Outra dúvida", next: "duvidas" }] },
+
+    { id: "d_seguro", type: "choice",
+      messages: [
+        { text: "Entendo o seu medo, {{nome}}, e acho certo você perguntar 👏 Aqui no chat eu nunca peço senha, código de verificação nem dados de cartão ou banco. Você só informa o pagamento na página da minha plataforma." },
+        { if: "fatura", text: "🤫 {{real.fatura}}" },
+        { if: "guarantee", text: "🔒 {{real.guarantee}}" }
+      ],
+      options: [{ label: "Ver os pacotes 🔥", next: "oferta" }, { label: "Ir direto pro combo 😈", url: "{{checkout.combo}}" }, { label: "Outra dúvida", next: "duvidas" }] }
+  ]
+};
+
+/* ========================= LÓGICA (não precisa editar) ========================= */
+const $ = s => document.querySelector(s);
+const chat = $("#chat"), form = $("#form"), input = $("#input"), sendBtn = $("#send"), downBtn = $("#down"), statusEl = $("#status");
+const steps = Object.fromEntries(CONFIG.steps.map(s => [s.id, s]));
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const BLOCK_KEY = CONFIG.storageKey + "-bloqueado";
+const CHECKS = '<svg viewBox="0 0 16 11" width="16" height="11" aria-hidden="true"><path class="c1" d="M1 6l3 3 7-8"/><path class="c2" d="M6 8l1.2 1.2 7-8"/></svg>';
+const ICON_EXT = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>';
+let state, busy = false, runId = 0, nudgeT;
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const el = (tag, cls) => { const e = document.createElement(tag); if (cls) e.className = cls; return e; };
+const clock = () => new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+const lookup = (obj, path) => path.split(".").reduce((o, k) => (o == null ? o : o[k]), obj);
+const norm = t => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\p{L}\p{N} ]/gu, "").trim();
+const safeUrl = u => /^https?:\/\//i.test(u) || /^[\w\-.\/]+\.html?$/i.test(u);
+const isBlocked = () => { try { return localStorage.getItem(BLOCK_KEY) === "1"; } catch (e) { return false; } };
+
+function deadlineDate() { const d = CONFIG.offer.deadline ? new Date(CONFIG.offer.deadline) : null; return d && !isNaN(d) && d > new Date() ? d : null; }
+function slotsLeft() { const n = CONFIG.offer.slots; return typeof n === "number" && n > 0 ? n : null; }
+/* "if": deadline/slots vêm de offer; qualquer outro nome vem de real (vazio = esconde) */
+const cond = k => k === "deadline" ? !!deadlineDate() : k === "slots" ? slotsLeft() !== null : !!String(CONFIG.real[k] || "").trim();
+function fmtPrazo() {
+  const d = deadlineDate(); if (!d) return "";
+  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) + " às " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+}
+const interp = t => String(t).replace(/\{\{([\w.]+)\}\}/g, (_, k) => {
+  if (k === "prazo") return fmtPrazo();
+  if (k === "vagas") return slotsLeft() ?? "";
+  if (/^(checkout|prices|real)\./.test(k)) return lookup(CONFIG, k) ?? "";
+  return state.vars[k] ?? "";
+});
+
+function pickNicknames() {
+  const a = CONFIG.apelidos.slice(); const i = Math.floor(Math.random() * a.length);
+  const first = a.splice(i, 1)[0] || "";
+  const second = a.length ? a[Math.floor(Math.random() * a.length)] : first;
+  return { apelido: first, apelido2: second };
+}
+
+function resolveSrc(s) {
+  if (s === "demo:tone") return toneUrl();
+  if (s.startsWith("demo:img:")) {
+    const [, , label, color] = s.split(":");
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='600' height='320'><rect width='600' height='320' fill='${color}'/><text x='300' y='190' font-family='sans-serif' font-size='48' fill='#fff' text-anchor='middle'>${label.replace(/[<&]/g, "")}</text></svg>`;
+    return "data:image/svg+xml," + encodeURIComponent(svg);
+  }
+  return s;
+}
+function toneUrl() {
+  if (toneUrl.u) return toneUrl.u;
+  const sr = 8000, notes = [523, 659, 784], d = .5, n = sr * d * notes.length, b = new DataView(new ArrayBuffer(44 + n * 2));
+  const w = (o, s) => [...s].forEach((c, i) => b.setUint8(o + i, c.charCodeAt(0)));
+  w(0, "RIFF"); b.setUint32(4, 36 + n * 2, true); w(8, "WAVEfmt "); b.setUint32(16, 16, true); b.setUint16(20, 1, true); b.setUint16(22, 1, true);
+  b.setUint32(24, sr, true); b.setUint32(28, sr * 2, true); b.setUint16(32, 2, true); b.setUint16(34, 16, true); w(36, "data"); b.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) {
+    const f = notes[Math.floor(i / (sr * d))], env = Math.min(1, (sr * d - (i % (sr * d))) / 800);
+    b.setInt16(44 + i * 2, Math.sin(2 * Math.PI * f * i / sr) * 9000 * env, true);
+  }
+  return toneUrl.u = URL.createObjectURL(new Blob([b], { type: "audio/wav" }));
+}
+function defaultAvatar() {
+  const ini = (CONFIG.profile.name.trim()[0] || "A").toUpperCase();
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='96' height='96'><rect width='96' height='96' fill='${CONFIG.colors.accent}'/><text x='48' y='64' font-family='sans-serif' font-size='46' font-weight='700' fill='#fff' text-anchor='middle'>${ini.replace(/[<&]/g, "")}</text></svg>`;
+  return "data:image/svg+xml," + encodeURIComponent(svg);
+}
+
+const blank = () => ({ v: 3, entries: [], vars: pickNicknames(), current: null, idx: 0, waiting: null, nudged: {} });
+function save() { try { localStorage.setItem(CONFIG.storageKey, JSON.stringify(state)); } catch (e) {} }
+function load() {
+  try { const s = JSON.parse(localStorage.getItem(CONFIG.storageKey)); if (s && s.v === 3 && Array.isArray(s.entries) && s.entries.length) return s; } catch (e) {}
+  return null;
+}
+
+const nearBottom = () => chat.scrollHeight - chat.scrollTop - chat.clientHeight < 100;
+const toEnd = (instant) => chat.scrollTo({ top: chat.scrollHeight, behavior: instant || reduce ? "auto" : "smooth" });
+function push(node, force) {
+  const was = nearBottom();
+  chat.append(node);
+  if (was || force) toEnd(); else downBtn.hidden = false;
+}
+chat.addEventListener("scroll", () => { if (nearBottom()) downBtn.hidden = true; }, { passive: true });
+downBtn.onclick = () => { toEnd(); downBtn.hidden = true; };
+
+function render(e, instant) {
+  const m = e.m, row = el("div", "row " + e.who);
+  const last = [...chat.querySelectorAll(".row")].pop();
+  if (!last || !last.classList.contains(e.who)) row.classList.add("tail");
+  if (instant) row.style.animation = "none";
+  const b = el("div", "bubble");
+  const type = m.type || "text";
+  if (type === "image") {
+    const i = el("img", "pic"); i.src = resolveSrc(m.src); i.alt = m.alt || "Imagem"; i.loading = "lazy"; b.append(i);
+    if (m.caption) { const p = el("p"); p.textContent = m.caption; b.append(p); }
+  } else if (type === "audio") {
+    const a = el("audio"); a.controls = true; a.preload = "none"; a.src = resolveSrc(m.src); a.setAttribute("aria-label", "Mensagem de áudio"); b.append(a);
+  } else if (type === "card") {
+    b.classList.add("card"); if (m.hot) b.classList.add("hot");
+    if (m.badge) { const g = el("span", "badge"); g.textContent = m.badge; b.append(g); }
+    if (m.image) { const i = el("img", "pic"); i.src = resolveSrc(m.image); i.alt = m.alt || m.title || ""; i.loading = "lazy"; b.append(i); }
+    const h = el("h3"); h.textContent = m.title || ""; b.append(h);
+    if (m.price) {
+      const pr = el("p", "price");
+      if (m.old) { const s = el("s"); s.textContent = m.old; pr.append(s); }
+      pr.append(document.createTextNode(m.price)); b.append(pr);
+    }
+    const p = el("p"); p.textContent = m.text || ""; b.append(p);
+    if (m.button) {
+      const btn = el("button", "cbtn"); btn.type = "button"; btn.textContent = m.button.label; btn.disabled = true; btn.dataset.step = e.step;
+      btn.onclick = () => pick({ label: m.button.label, next: m.button.next, url: m.button.url });
+      b.append(btn);
+    }
+  } else {
+    const p = el("p"); p.textContent = m.text; b.append(p);
+  }
+  const meta = el("div", "meta"), t = el("span"); t.textContent = e.t; meta.append(t);
+  if (e.who === "user") {
+    const k = el("span", "ticks"); k.innerHTML = CHECKS; k.setAttribute("aria-label", "Enviada"); meta.append(k);
+    if (instant) k.classList.add("d", "r");
+    else { setTimeout(() => k.classList.add("d"), 400); setTimeout(() => k.classList.add("r"), 1100); }
+  }
+  b.append(meta); row.append(b);
+  return row;
+}
+function addEntry(who, m, stepId, force) {
+  const e = { who, m, step: stepId, t: clock() };
+  state.entries.push(e); push(render(e), force); save();
+}
+function botMsg(raw, stepId) {
+  const m = JSON.parse(JSON.stringify(raw));
+  ["text", "title", "alt", "caption", "price", "old", "src"].forEach(k => { if (m[k]) m[k] = interp(m[k]); });
+  if (m.button && m.button.url) m.button.url = interp(m.button.url);
+  addEntry("bot", m, stepId);
+}
+const userSay = text => addEntry("user", { type: "text", text }, null, true);
+
+async function typeFor(ms) {
+  const r = el("div", "row bot tail typing"); r.innerHTML = "<div class='bubble'><i></i><i></i><i></i></div>";
+  r.setAttribute("aria-label", CONFIG.texts.typing);
+  const last = [...chat.querySelectorAll(".row")].pop();
+  if (last && last.classList.contains("bot")) r.classList.remove("tail");
+  push(r); statusEl.textContent = CONFIG.texts.typing;
+  await sleep(ms); r.remove(); statusEl.textContent = CONFIG.profile.status;
+}
+const delayFor = m => m.delay ?? (m.type === "card" ? 900 : m.type === "audio" || m.type === "image" ? 1200 : Math.min(CONFIG.typing.max, CONFIG.typing.base + CONFIG.typing.perChar * (m.text ? interp(m.text).length : 0)));
+
+function lock() { sendBtn.disabled = busy || !state.waiting; }
+function setBusy(v) { busy = v; lock(); }
+
+function clearQuick() { chat.querySelectorAll(".quick").forEach(q => q.remove()); }
+function enableCards(id) { chat.querySelectorAll(".cbtn").forEach(b => b.disabled = b.dataset.step !== id); }
+
+/* lembrete único se o cliente ficar parado na etapa */
+function armNudge(step) {
+  clearTimeout(nudgeT);
+  if (!step.nudge || (state.nudged || {})[step.id]) return;
+  const my = runId;
+  nudgeT = setTimeout(async () => {
+    if (my !== runId || busy || state.waiting !== step.id) return;
+    state.nudged = state.nudged || {}; state.nudged[step.id] = 1; setBusy(true);
+    for (const m of step.nudge.filter(x => !x.if || cond(x.if))) {
+      await typeFor(delayFor(m)); if (my !== runId) return;
+      clearQuick(); botMsg(m, step.id);
+    }
+    showQuick(step); setBusy(false);
+  }, step.nudgeAfter || 45000);
+}
+
+function showQuick(step) {
+  clearQuick(); enableCards(step.id); armNudge(step);
+  input.placeholder = step.placeholder || CONFIG.texts.placeholder;
+  if (!step.options || !step.options.length) return;
+  const q = el("div", "quick"); q.setAttribute("role", "group"); q.setAttribute("aria-label", "Opções de resposta");
+  step.options.forEach(o => {
+    const b = el("button", "qbtn"); b.type = "button"; b.textContent = o.label;
+    if (o.url && !o.next) b.insertAdjacentHTML("beforeend", ICON_EXT);
+    b.onclick = () => pick(o); q.append(b);
+  });
+  push(q);
+}
+
+async function runStep(id, start = 0) {
+  const my = runId, step = steps[id];
+  if (!step) { console.error("Etapa inexistente:", id); setBusy(false); return; }
+  clearTimeout(nudgeT);
+  setBusy(true); state.current = id; state.waiting = null; clearQuick(); enableCards(null);
+  const msgs = (step.messages || []).filter(m => !m.if || cond(m.if));
+  for (let i = start; i < msgs.length; i++) {
+    state.idx = i; save();
+    await typeFor(delayFor(msgs[i]));
+    if (my !== runId) return;
+    botMsg(msgs[i], id); state.idx = i + 1; save();
+  }
+  if (my !== runId) return;
+  state.idx = msgs.length;
+  if (step.type === "message") {
+    if (step.next) return runStep(step.next);
+    save(); setBusy(false); return;
+  }
+  state.waiting = id; save(); showQuick(step); setBusy(false);
+  if (step.type === "input") input.focus({ preventScroll: true });
+}
+
+function pick(opt, typed) {
+  if (busy || !state.waiting) return;
+  if (opt.action === "restart") { reset(false); return; }
+  clearTimeout(nudgeT);
+  if (opt.block) { try { localStorage.setItem(BLOCK_KEY, "1"); } catch (e) {} }
+  if (opt.set) Object.assign(state.vars, opt.set);
+  const url = opt.url ? interp(opt.url) : "";
+  if (url && safeUrl(url)) window.open(url, "_blank", "noopener,noreferrer");
+  if (!opt.next) { if (typed) botNote(CONFIG.texts.done); else if (url) { userSay(opt.label); save(); armNudge(steps[state.waiting]); } return; }
+  setBusy(true); state.waiting = null; save();
+  clearQuick(); enableCards(null);
+  if (!typed) userSay(opt.label);
+  const my = runId; setTimeout(() => { if (my === runId) runStep(opt.next); }, 450);
+}
+
+async function botNote(text) {
+  const my = runId; setBusy(true);
+  text = interp(text);
+  await typeFor(Math.min(CONFIG.typing.max, CONFIG.typing.base + CONFIG.typing.perChar * text.length));
+  if (my !== runId) return;
+  clearQuick(); botMsg({ text }, state.waiting); showQuick(steps[state.waiting]); setBusy(false);
+}
+
+function cleanName(t) {
+  t = t.trim().replace(/^(meu nome é|meu nome e|me chamo|me chama|eu sou o|eu sou a|eu sou|sou o|sou a|sou)\s+/i, "");
+  const w = (t.split(/\s+/)[0] || "").replace(/[^\p{L}'\-]/gu, "").slice(0, 30);
+  return w.length >= 2 ? w[0].toLocaleUpperCase("pt-BR") + w.slice(1) : "";
+}
+
+function submit() {
+  const text = input.value.trim();
+  if (!text || busy || !state.waiting) return;
+  const step = steps[state.waiting];
+  input.value = "";
+  if (step.type === "input") {
+    let v = text.slice(0, 200);
+    if (step.validate === "name") {
+      v = cleanName(text);
+      if (!v) { setBusy(true); userSay(text); botNote(CONFIG.texts.invalidName); return; }
+    }
+    setBusy(true); state.vars[step.variable] = v; state.waiting = null; save();
+    clearQuick(); userSay(text);
+    const my = runId; setTimeout(() => { if (my === runId) runStep(step.next); }, 450);
+    return;
+  }
+  const n = norm(text);
+  const opt = (step.options || []).find(o => { const l = norm(o.label); return l && (l === n || (n.length >= 3 && (l.includes(n) || n.includes(l)))); });
+  userSay(text);
+  if (opt) { pick(opt, true); return; }
+  setBusy(true); botNote(CONFIG.texts.notUnderstood);
+}
+form.addEventListener("submit", ev => { ev.preventDefault(); submit(); });
+
+function mount() {
+  chat.textContent = "";
+  const p = el("div", "pill"); p.textContent = CONFIG.texts.disclaimer; chat.append(p);
+}
+function start() {
+  state = blank(); mount(); input.placeholder = CONFIG.texts.placeholder; lock();
+  runStep(isBlocked() ? CONFIG.blockedStep : CONFIG.start);
+}
+function restore(saved) {
+  state = saved; mount();
+  state.entries.forEach(e => chat.append(render(e, true)));
+  toEnd(true);
+  if (state.waiting && steps[state.waiting]) { showQuick(steps[state.waiting]); setBusy(false); }
+  else if (state.current) runStep(state.current, state.idx || 0);
+  else start();
+}
+function reset(ask) {
+  if (ask && state.entries.length && !confirm(CONFIG.texts.confirmRestart)) return;
+  runId++; busy = false; clearTimeout(nudgeT); statusEl.textContent = CONFIG.profile.status; downBtn.hidden = true;
+  try { localStorage.removeItem(CONFIG.storageKey); } catch (e) {}
+  input.value = ""; start();
+}
+$("#restart").onclick = () => reset(true);
+
+function fit() {
+  const was = nearBottom(), vv = window.visualViewport;
+  document.documentElement.style.setProperty("--app-h", (vv ? vv.height : innerHeight) + "px");
+  window.scrollTo(0, 0); if (was) toEnd(true);
+}
+if (window.visualViewport) { visualViewport.addEventListener("resize", fit); visualViewport.addEventListener("scroll", () => window.scrollTo(0, 0)); }
+addEventListener("resize", fit);
+
+(function init() {
+  const c = CONFIG.colors, r = document.documentElement.style;
+  r.setProperty("--header", c.header); r.setProperty("--accent", c.accent); r.setProperty("--user", c.userBubble);
+  r.setProperty("--bot", c.botBubble); r.setProperty("--bg", c.background); r.setProperty("--text", c.text);
+  document.title = CONFIG.profile.name + " · " + CONFIG.profile.status;
+  $("#name").textContent = CONFIG.profile.name; statusEl.textContent = CONFIG.profile.status;
+  const av = $("#avatar"); av.src = CONFIG.profile.photo || defaultAvatar(); av.onerror = () => { av.onerror = null; av.src = defaultAvatar(); };
+  $("#restart").title = CONFIG.texts.restart; $("#restart").setAttribute("aria-label", CONFIG.texts.restart);
+  downBtn.textContent = CONFIG.texts.newMsg;
+  fit();
+  state = blank();
+  const saved = isBlocked() ? null : load();
+  saved ? restore(saved) : start();
+})();
+</script>
+</body>
+</html>
